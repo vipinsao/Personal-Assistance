@@ -10,6 +10,7 @@ import { ToolNode } from "@langchain/langgraph/prebuilt";
 import type { AIMessage } from "@langchain/core/messages";
 import readline from "readline/promises";
 import { threadId } from "worker_threads";
+import { content } from "googleapis/build/src/apis/content";
 const tools = [createEventTool, getEventsTool];
 
 const model = new ChatGroq({
@@ -60,6 +61,12 @@ const checkpointer = new MemorySaver();
 
 const app = graph.compile({ checkpointer });
 
+const currentDateTime = new Date()
+  .toLocaleDateString("sv-SE")
+  .replace(" ", "T");
+
+const timeZoneString = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
 async function main() {
   let config = { configurable: { thread_id: "1" } };
 
@@ -75,6 +82,10 @@ async function main() {
     const result = await app.invoke(
       {
         messages: [
+          {
+            role: "system",
+            content: `You are a smart personal assistance who is perfect. Current datetime:${currentDateTime} Current timeZone string:${timeZoneString}`,
+          },
           {
             role: "user",
             content: userInput,

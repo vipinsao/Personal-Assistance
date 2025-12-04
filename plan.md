@@ -10,3 +10,4 @@
 [V] Test the agent
 [V] Terminal UI/ Frontend UI
 [V] Add the memory
+[V] Fix timezone
