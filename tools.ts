@@ -1,6 +1,5 @@
 import { tool } from "@langchain/core/tools";
 import { google } from "googleapis";
-import tokens from "./tokens.json";
 import z from "zod";
 
 const oauth2Client = new google.auth.OAuth2(
@@ -11,7 +10,10 @@ const oauth2Client = new google.auth.OAuth2(
 
 const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
-oauth2Client.setCredentials(tokens);
+oauth2Client.setCredentials({
+  access_token: process.env.GOOGLE_ACCESS_TOKEN,
+  refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+});
 
 type attendee = {
   email: string;

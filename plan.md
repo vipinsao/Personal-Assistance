@@ -11,3 +11,4 @@
 [V] Terminal UI/ Frontend UI
 [V] Add the memory
 [V] Fix timezone
+[] Move Secrets into .env
