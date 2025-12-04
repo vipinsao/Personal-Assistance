@@ -2,7 +2,7 @@
 
 [V] project setup
 [V] Setup LLM
-[] Setup the tools - create event tool, get event tool
+[V] Setup the tools - create event tool, get event tool
 [] Build the graph
 [] Implement the tools - Connect to google calendar
 [] Test the agent
