@@ -13,28 +13,102 @@ const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
 oauth2Client.setCredentials(tokens);
 
+type attendee = {
+  email: string;
+  displayName: string;
+};
+
+const eventDataSchema = z.object({
+  summary: z.string().describe("The title of the event"),
+  start: z.object({
+    dateTime: z.string().describe("The start date time of the event in UTC"),
+    timeZone: z.string().describe("The timezone of the event time in UTC"),
+  }),
+  end: z.object({
+    dateTime: z.string().describe("The end date time of the event in UTC"),
+    timeZone: z.string().describe("The timzone of the event time in UTC"),
+  }),
+  attendees: z.array(
+    z.object({
+      email: z.string().describe("The email of the attendee"),
+      displayName: z.string().describe("The name of the attendee"),
+    })
+  ),
+});
+
+type EventData = z.infer<typeof eventDataSchema>;
+
+// type EventData = {
+//   query: string;
+//   summary: string;
+//   start: {
+//     dateTime: string;
+//     timeZone: string;
+//   };
+//   end: {
+//     dateTime: string;
+//     timeZone: string;
+//   };
+//   attendees: attendee[];
+// };
+
 export const createEventTool = tool(
   //query is passed by llm itself not by us
-  async ({}) => {
+  async (eventData) => {
+    const { summary, start, end, attendees } = eventData as EventData;
+
     //Google calendar logic goes here
-    return "The meeting has been created";
+    const response = await calendar.events.insert({
+      calendarId: "primary",
+      sendUpdates: "all",
+      conferenceDataVersion: 1,
+      requestBody: {
+        summary,
+        start,
+        end,
+        attendees,
+        conferenceData: {
+          createRequest: {
+            requestId: crypto.randomUUID(),
+            conferenceSolutionKey: {
+              type: "hangoutsMeet",
+            },
+          },
+        },
+      },
+    });
+
+    if (response.statusText === "OK") {
+      return "The meeting has been created.";
+    }
+
+    return "Couldn't create a meeting.";
   },
   {
     name: "create-event",
     description: "Call to create the calendar events",
-    schema: z.object({
-      query: z
-        .string()
-        .describe("The query to be used to create event into google calendar."),
-    }),
+    schema: eventDataSchema,
   }
 );
 
-type params = {
-  query: string;
-  timeMin: string;
-  timeMax: string;
-};
+const getEventSchema = z.object({
+  query: z.string().describe(
+    //   "The query to be used to get events from google calendar. It can be one of these values: meeting, interview, summary, description, location, attendees display name, attendees email, organiser's name, organiser's email or meetings or something see all the calendar details"
+    "There must be any meeting or event analyze the calendar correctly."
+  ),
+  timeMin: z
+    .string()
+    .describe("The from datetime in UTC format for the event."),
+  timeMax: z.string().describe("The to datetime in UTC format for the event"),
+});
+
+type params = z.infer<typeof getEventSchema>;
+
+// type params = {
+//   query: string;
+//   timeMin: string;
+//   timeMax: string;
+// };
 
 export const getEventsTool = tool(
   //query is passed by llm itself not by us
@@ -42,15 +116,13 @@ export const getEventsTool = tool(
     /**
      * timeMin
      * timeMax
-     * q
+     * q(query)
      */
-
-    console.log("params", params);
     const { query, timeMin, timeMax } = params as params;
     try {
       const response = await calendar.events.list({
         calendarId: "primary",
-        q: query,
+        // q: query,
         timeMin,
         timeMax,
       });
@@ -76,18 +148,6 @@ export const getEventsTool = tool(
   {
     name: "get-events",
     description: "Call to get the calendar events",
-    schema: z.object({
-      query: z
-        .string()
-        .describe(
-          "The query to be used to get events from google calendar. It can be one of these values: meeting, summary, description, location, attendees display name, attendees email, organiser's name, organiser's email or meetings or something see all the calendar details"
-        ),
-      timeMin: z
-        .string()
-        .describe("The from datetime in UTC format for the event."),
-      timeMax: z
-        .string()
-        .describe("The to datetime in UTC format for the event"),
-    }),
+    schema: getEventSchema,
   }
 );

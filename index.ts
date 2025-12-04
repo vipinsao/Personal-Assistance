@@ -56,7 +56,7 @@ async function main() {
     messages: [
       {
         role: "user",
-        content: "Do I have any meeting today?",
+        content: "Do I have any interview or meetings today?",
       },
     ],
   });
