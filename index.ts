@@ -56,7 +56,7 @@ async function main() {
     messages: [
       {
         role: "user",
-        content: "Create a meeting for me today with Vipin. Use tool calling",
+        content: "Do I have any meeting today?",
       },
     ],
   });
