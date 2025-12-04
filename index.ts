@@ -1,9 +1,15 @@
 import { ChatGroq } from "@langchain/groq";
 import { createEventTool, getEventsTool } from "./tools";
-import { END, MessagesAnnotation, StateGraph } from "@langchain/langgraph";
+import {
+  END,
+  MemorySaver,
+  MessagesAnnotation,
+  StateGraph,
+} from "@langchain/langgraph";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import type { AIMessage } from "@langchain/core/messages";
-
+import readline from "readline/promises";
+import { threadId } from "worker_threads";
 const tools = [createEventTool, getEventsTool];
 
 const model = new ChatGroq({
@@ -49,18 +55,37 @@ const graph = new StateGraph(MessagesAnnotation)
     tools: "tools",
   });
 
-const app = graph.compile();
+//memory added
+const checkpointer = new MemorySaver();
+
+const app = graph.compile({ checkpointer });
 
 async function main() {
-  const result = await app.invoke({
-    messages: [
-      {
-        role: "user",
-        content: "Do I have any interview or meetings today?",
-      },
-    ],
+  let config = { configurable: { thread_id: "1" } };
+
+  //creating a terminal ui
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
   });
-  console.log("AI", result.messages[result.messages.length - 1]?.content);
+
+  while (true) {
+    const userInput = await rl.question("You: ");
+    if (userInput === "/bye" || userInput === "/exit") break;
+    const result = await app.invoke(
+      {
+        messages: [
+          {
+            role: "user",
+            content: userInput,
+          },
+        ],
+      },
+      config
+    );
+    console.log("AI:", result.messages[result.messages.length - 1]?.content);
+  }
+  rl.close();
 }
 
 main();

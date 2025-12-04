@@ -7,6 +7,6 @@
 [V] Implement the tools - Connect to google calendar
 ----[V] get Event
 ----[V] create Event
-[] Test the agent
-[] Terminal UI/ Frontend UI
-[] Add the memory
+[V] Test the agent
+[V] Terminal UI/ Frontend UI
+[V] Add the memory
